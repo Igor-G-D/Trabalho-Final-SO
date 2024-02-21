@@ -1,5 +1,5 @@
 # Trabalho-Final-SO
-## UFPEL - Sistemas Operacionais, Igor Dutra e Graziele Fagundes, 2023/2
+## UFPEL - Sistemas Operacionais, Igor Dutra e Graziele Fagundes - 2023/2
 ### Simulação da barbearia “Pronto Socorro"
 
   O problema consiste em simular o funcionamento de
