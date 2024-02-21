@@ -14,11 +14,7 @@ e espera (se tem alguma cadeira disponível) ou vai
 embora (se todas as cadeiras estão ocupadas).
 
   Um barbeiro, para poder cortar o cabelo de alguém,
-precisa ter acesso a uma tesoura e um pente, porém, nessa barbearia não há
-Universidade Federal de Pelotas
-Disciplina de Sistemas Operacionais
-Prof. Rafael Burlamaqui Amaral / Monitor: Vinícius Peruzzi
-uma quantidade de tesouras e pentes que permita que todos os barbeiros
+precisa ter acesso a uma tesoura e um pente, porém, nessa barbearia não há uma quantidade de tesouras e pentes que permita que todos os barbeiros
 trabalhem ao mesmo tempo.
 
   Vamos direcionar nossa simulação apenas em uma barbearia hipotética
