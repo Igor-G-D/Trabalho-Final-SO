@@ -1,60 +1,84 @@
 import java.util.Random;
 import java.util.concurrent.Semaphore;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 class Barbearia {
     private int cadeirasEspera;
     private int clientesAtendidos;
     private int clientesDesistiram;
-    private Semaphore mutex;
+    private Lock lock;
     private Semaphore clientes;
     private Semaphore barbeirosDisponiveis;
+    private Semaphore pentesDisponiveis;
+    private Semaphore tesourasDisponiveis;
 
     public Barbearia(int N, int M) {
         this.clientesAtendidos = 0;
         this.clientesDesistiram = 0;
         this.cadeirasEspera = N;
-        this.mutex = new Semaphore(1);
+        this.lock = new ReentrantLock();
         this.clientes = new Semaphore(0);
         this.barbeirosDisponiveis = new Semaphore(M, true);
+        this.pentesDisponiveis = new Semaphore(M/2);
+        this.tesourasDisponiveis = new Semaphore(M/2);
     }
 
     public void cortarCabelo(Barbeiro barbeiro) throws InterruptedException {
-        clientes.acquire();
+        if (!clientes.tryAcquire()) {
+            System.out.println("Sem clientes, " + barbeiro.getName() + " está cochilando");
+            clientes.acquire();
+            System.out.println( barbeiro.getName() + " foi acordado para atender um cliente");
+        }
+
         barbeirosDisponiveis.acquire();
 
-        mutex.acquire();
+        if (!pentesDisponiveis.tryAcquire()) {
+            System.out.println("Sem pentes disponiveis, " + barbeiro.getName() + " está aguardando");
+            pentesDisponiveis.acquire();
+            System.out.println( barbeiro.getName() + " foi acordado para atender um cliente");
+        }
+
+        if (!tesourasDisponiveis.tryAcquire()) {
+            System.out.println("Sem clientes, " + barbeiro.getName() + " está cochilando");
+            tesourasDisponiveis.acquire();
+            System.out.println( barbeiro.getName() + " foi acordado para atender um cliente");
+        }
+
+        lock.lock();
         cadeirasEspera++;
-        mutex.release();
+        lock.unlock();
 
         int tempo = new Random().nextInt(4000) + 4000;
         System.out.println(barbeiro.getName() + " está cortando cabelo por " + tempo + "ms. Cadeiras de espera restantes: " + cadeirasEspera + ".");
         Thread.sleep(tempo);
         sairBarbearia();
-
-        barbeirosDisponiveis.release();
     }
 
     public void atenderCliente(Cliente cliente) throws InterruptedException {
-        mutex.acquire();
+        lock.lock();
         if (cadeirasEspera > 0) {
             cadeirasEspera--;
             System.out.println(cliente.getName() + " está esperando. Cadeiras de espera restantes: " + cadeirasEspera);
-            mutex.release();
+            lock.unlock();
             clientes.release();
         } 
         else 
         {
             this.clientesDesistiram++;
-            mutex.release();
+            lock.unlock();
             System.out.println(cliente.getName() + " desistiu devido à sala de espera cheia.");
         }
     }
 
     private void sairBarbearia() throws InterruptedException {
-        mutex.acquire();
+        lock.lock();
         clientesAtendidos++;
-        mutex.release();
-        System.out.println("Um cliente terminou seu corte e saiu da barbearia.");
+        barbeirosDisponiveis.release();
+        pentesDisponiveis.release();
+        tesourasDisponiveis.release();
+        lock.unlock();
+        System.out.println("Um cliente terminou seu corte e saiu da barbearia. Recursos Liberados");
     }
 
     public int getTotalClientesAtendidos() {

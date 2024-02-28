@@ -28,7 +28,7 @@ public class App {
             clientes.add(cliente);
             cliente.start();
             try {
-                Thread.sleep(new Random().nextInt(2000)); // Aguarda um período de tempo aleatório
+                Thread.sleep(new Random().nextInt(4000)); // Aguarda um período de tempo aleatório
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
