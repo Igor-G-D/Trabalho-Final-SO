@@ -14,7 +14,7 @@ class Barbeiro extends Thread {
                 barbearia.cortarCabelo(this);
             }
         } catch (InterruptedException e) {
-            // Barbeiro interrompido
+            System.out.println(this.getName() + " foi para casa.");
         }
     }
 }

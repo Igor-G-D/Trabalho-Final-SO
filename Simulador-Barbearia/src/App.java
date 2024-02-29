@@ -3,10 +3,14 @@ import java.util.Random;
 
 public class App {
     public static void main(String[] args) throws Exception {
-        int N = 3;      // Cadeiras de espera
-        int M = 2;      // Cadeiras de barbear = barbeiros
+        int N = 5;      
+        int M = 3;     
+        int tempoDeGeracaoEmSegundos = new Random().nextInt(20) + 10; // Gera um tempo aleatório entre 10 e 30 segundos
 
-        int tempoDeGeracaoEmSegundos = 10;  // Tempo em segundos para gerar clientes
+        System.out.println("------------------------------------------------------------------------------------------------------");
+        System.out.println("Barbearia aberta! " + N + " cadeira(s) de espera, " + M + " barbeiro(s) e " + (M/2) + " pente(s) e tesoura(s).");
+        System.out.println("Clientes serão gerados por " + tempoDeGeracaoEmSegundos + " segundos.");
+        System.out.println("------------------------------------------------------------------------------------------------------");
 
         Barbearia barbearia = new Barbearia(N, M); 
 
@@ -17,37 +21,46 @@ public class App {
             barbeiros[i].start();
         }
 
-        // Criação de clientes enquanto o tempo decorrido for menor que o tempo desejado
+        // Criação de clientes
         ArrayList<Cliente> clientes = new ArrayList<Cliente>(); 
         long startTime = System.currentTimeMillis();
         long elapsedTime = 0;
-        int i = 0;
-        while (elapsedTime < tempoDeGeracaoEmSegundos * 1000) { // Converte o tempo para milissegundos
-            Cliente cliente = new Cliente("Cliente " + (i + 1), barbearia);
-            i++;
+        int index = 1;
+
+        while (elapsedTime < tempoDeGeracaoEmSegundos * 1000) {
+            Thread.sleep(new Random().nextInt(3000));
+
+            Cliente cliente = new Cliente("Cliente " + (index), barbearia);
+            index++;
             clientes.add(cliente);
             cliente.start();
-            try {
-                Thread.sleep(new Random().nextInt(4000)); // Aguarda um período de tempo aleatório
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
+
             elapsedTime = System.currentTimeMillis() - startTime;
         }
         
-        int totalClientes = clientes.size(); // Supondo que 'clientes' seja a lista de todos os clientes gerados
-
         // Aguarda até que todos os clientes tenham sido atendidos
+        int totalClientes = clientes.size(); 
         while (barbearia.getTotalClientesAtendidos() + barbearia.getTotalClientesDesistiram() < totalClientes) 
         {
-            Thread.sleep(1000); // Aguarda um segundo antes de verificar novamente
+            Thread.sleep(1000);
+        }
+
+        for (Cliente cliente : clientes) {
+            cliente.join();
+        }
+
+        for (Barbeiro barbeiro : barbeiros) {
+            barbeiro.interrupt();
+            barbeiro.join();
         }
 
         // Exibe o total de clientes atendidos
+        System.out.println("------------------------------------------------------------------------------------------------------");
+        System.out.println("Total de clientes gerados: " + totalClientes);
         System.out.println("Total de clientes atendidos: " + barbearia.getTotalClientesAtendidos());
         System.out.println("Total de clientes que desistiram: " + barbearia.getTotalClientesDesistiram());
+        System.out.println("------------------------------------------------------------------------------------------------------");
 
-        // Encerra a execução do programa
         System.exit(0);
     }
 }

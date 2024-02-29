@@ -24,42 +24,55 @@ class Barbearia {
         this.tesourasDisponiveis = new Semaphore(M/2);
     }
 
-    public void cortarCabelo(Barbeiro barbeiro) throws InterruptedException {
+    public void cortarCabelo(Barbeiro barbeiro) throws InterruptedException 
+    {
         if (!clientes.tryAcquire()) {
-            System.out.println("Sem clientes, " + barbeiro.getName() + " está cochilando");
+            System.out.println("Sem clientes, " + barbeiro.getName() + " está cochilando.");
             clientes.acquire();
-            System.out.println( barbeiro.getName() + " foi acordado para atender um cliente");
+            System.out.println( barbeiro.getName() + " foi acordado para atender um cliente.");
         }
 
         barbeirosDisponiveis.acquire();
 
-        if (!pentesDisponiveis.tryAcquire()) {
-            System.out.println("Sem pentes disponiveis, " + barbeiro.getName() + " está aguardando");
-            pentesDisponiveis.acquire();
-            System.out.println( barbeiro.getName() + " foi acordado para atender um cliente");
-        }
+        // Evitar deadlock
+        int pegouTudo = 0;
+        while (pegouTudo != 2)
+        {
+            pegouTudo = 0;
 
-        if (!tesourasDisponiveis.tryAcquire()) {
-            System.out.println("Sem clientes, " + barbeiro.getName() + " está cochilando");
-            tesourasDisponiveis.acquire();
-            System.out.println( barbeiro.getName() + " foi acordado para atender um cliente");
+            if (!pentesDisponiveis.tryAcquire()) {
+                System.out.println("Sem pentes disponiveis, " + barbeiro.getName() + " está aguardando.");
+                pentesDisponiveis.acquire();
+            }
+            pegouTudo++;
+            System.out.println( barbeiro.getName() + " pegou um pente.");
+    
+            if (!tesourasDisponiveis.tryAcquire()) {
+                System.out.println("Sem tesouras disponiveis, " + barbeiro.getName() + " irá soltar o pente e tentar novamente.");
+                pentesDisponiveis.release();
+            }
+            else {
+                pegouTudo++;
+                System.out.println( barbeiro.getName() + " pegou uma tesoura.");
+            } 
         }
-
+        
         lock.lock();
         cadeirasEspera++;
         lock.unlock();
 
-        int tempo = new Random().nextInt(4000) + 4000;
-        System.out.println(barbeiro.getName() + " está cortando cabelo por " + tempo + "ms. Cadeiras de espera restantes: " + cadeirasEspera + ".");
-        Thread.sleep(tempo);
+        int tempo = new Random().nextInt(4) + 3;
+        System.out.println(barbeiro.getName() + " está cortando cabelo por " + tempo + "s. Cadeiras de espera restantes: " + cadeirasEspera + ".");
+        Thread.sleep(tempo * 1000);
         sairBarbearia();
     }
 
-    public void atenderCliente(Cliente cliente) throws InterruptedException {
+    public void atenderCliente(Cliente cliente) throws InterruptedException 
+    {
         lock.lock();
         if (cadeirasEspera > 0) {
             cadeirasEspera--;
-            System.out.println(cliente.getName() + " está esperando. Cadeiras de espera restantes: " + cadeirasEspera);
+            System.out.println(cliente.getName() + " chegou e está esperando. Cadeiras de espera restantes: " + cadeirasEspera + ".");
             lock.unlock();
             clientes.release();
         } 
@@ -71,14 +84,17 @@ class Barbearia {
         }
     }
 
-    private void sairBarbearia() throws InterruptedException {
+    private void sairBarbearia() throws InterruptedException 
+    {
         lock.lock();
         clientesAtendidos++;
+        lock.unlock();
+
         barbeirosDisponiveis.release();
         pentesDisponiveis.release();
         tesourasDisponiveis.release();
-        lock.unlock();
-        System.out.println("Um cliente terminou seu corte e saiu da barbearia. Recursos Liberados");
+        
+        System.out.println("Um cliente terminou seu corte e saiu da barbearia. Recursos Liberados.");
     }
 
     public int getTotalClientesAtendidos() {
